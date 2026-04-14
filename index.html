@@ -6,932 +6,417 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="STT 2026">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%2314b8a6' width='180' height='180'/><text x='50%' y='50%' font-size='80' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>STT</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%2314b8a6' width='180' height='180'/><text x='50%25' y='50%25' font-size='80' font-weight='bold' text-anchor='middle' dominant-baseline='central' fill='white'>STT</text></svg>">
   <meta name="theme-color" content="#14b8a6">
   <title>STT 2026 | Trip Hub</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>window.react = window.React;</script>  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
+  <script>window.react = window.React;</script>
+  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; }
-    html, body, #root { width: 100%; height: 100%; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+    html,body,#root { width:100%; height:100%; }
+    @keyframes wave { 0%,100%{transform:rotate(0)} 25%{transform:rotate(20deg)} 75%{transform:rotate(-15deg)} }
+    .wave { animation: wave 1.5s ease-in-out infinite; display:inline-block; }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+const { Plane, MapPin, Utensils, Plus, X, Copy, Check, ChevronRight, Calendar, Sun, Users, Clock, Palmtree } = LucideReact;
 
-  <script type="text/babel">
-    const { useState, useEffect, useCallback } = React
-    const { Plane, UtensilsCrossed, ShoppingBag, CheckSquare, DollarSign, Sun, Palmtree, Plus, X, Copy, Check, Calendar, Users, Zap } = LucideReact || window.LucideReact
+/* ── Supabase config ── */
+const SB_URL = "https://zcqtkqslrgwmpcizgaca.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjcXRrcXNscmd3bXBjaXpnYWNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1MTY0NDYsImV4cCI6MjA2MDA5MjQ0Nn0.gXsRaPT2JMZMBMfU3Oqp0MN7iFCExMfphKkuVwz8VjY";
+const TRIP = "stt-2026";
+const sb = (path, opts={}) => fetch(`${SB_URL}/rest/v1/${path}`, {
+  ...opts,
+  headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, "Content-Type":"application/json", Prefer: opts.method === "POST" ? "return=representation" : "return=representation", ...opts.headers }
+});
 
-    const SUPABASE_URL = 'https://zcqtkqslrgwmpcizgaca.supabase.co'
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjcXRrcXNscmd3bXBjaXpnYWNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODcwODQsImV4cCI6MjA5MTE2MzA4NH0.gc-9yPPrzwgz5g2wiPnyRdfWKelik6eKyMn3SkSnaUs'
-    const TRIP_SLUG = 'stt-2026'
+/* ── Trip data ── */
+const MEMBERS = [
+  { name:"Jay",    idx:0, bg:"bg-blue-500",   text:"text-blue-700",  ring:"ring-blue-400",   light:"bg-blue-50",   border:"border-blue-200" },
+  { name:"Ashley", idx:1, bg:"bg-pink-500",   text:"text-pink-700",  ring:"ring-pink-400",   light:"bg-pink-50",   border:"border-pink-200" },
+  { name:"Brylee", idx:2, bg:"bg-purple-500", text:"text-purple-700",ring:"ring-purple-400", light:"bg-purple-50", border:"border-purple-200" },
+  { name:"Breea",  idx:3, bg:"bg-amber-500",  text:"text-amber-700", ring:"ring-amber-400",  light:"bg-amber-50",  border:"border-amber-200" },
+];
 
-    const headers = {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
+const DAYS = [
+  { id:"day-1", date:"June 6",  label:"Arrival Day" },
+  { id:"day-2", date:"June 7",  label:"Magens Bay" },
+  { id:"day-3", date:"June 8",  label:"Town & Mountain Top" },
+  { id:"day-4", date:"June 9",  label:"Coki Beach & Coral World" },
+  { id:"day-5", date:"June 10", label:"St. John Day Trip" },
+  { id:"day-6", date:"June 11", label:"Water Sports" },
+  { id:"day-7", date:"June 12", label:"Last Day / Fly Home" },
+];
+
+/* ── App ── */
+function App() {
+  const [tab, setTab] = useState("picks");
+  const [picks, setPicks] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [selDay, setSelDay] = useState("day-1");
+  const [selMember, setSelMember] = useState(0);
+  const [newAct, setNewAct] = useState("");
+  const [newRest, setNewRest] = useState("");
+  const [copied, setCopied] = useState(false);
+  const inputRef = useRef(null);
+
+  /* Load picks from Supabase */
+  useEffect(() => {
+    sb(`picks?trip_slug=eq.${TRIP}&select=*`)
+      .then(r => r.json())
+      .then(rows => {
+        const map = {};
+        rows.forEach(r => { map[`${r.day_id}_${r.color_index}`] = r; });
+        setPicks(map);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const getPick = (dayId, idx) => picks[`${dayId}_${idx}`] || { activities: [], restaurant: "" };
+
+  /* Save helpers */
+  const savePick = useCallback(async (dayId, memberIdx, activities, restaurant) => {
+    const key = `${dayId}_${memberIdx}`;
+    const existing = picks[key];
+    const body = { trip_slug: TRIP, color_index: memberIdx, day_id: dayId, activities, restaurant, updated_at: new Date().toISOString() };
+    let res;
+    if (existing && existing.id) {
+      res = await sb(`picks?id=eq.${existing.id}`, { method: "PATCH", body: JSON.stringify({ activities, restaurant, updated_at: body.updated_at }) });
+    } else {
+      res = await sb("picks", { method: "POST", body: JSON.stringify(body) });
     }
+    const data = await res.json();
+    const row = Array.isArray(data) ? data[0] : data;
+    setPicks(prev => ({ ...prev, [key]: row }));
+  }, [picks]);
 
-    const memberColors = {
-      0: { bg: 'bg-blue-500', text: 'text-blue-500', name: 'Jay' },
-      1: { bg: 'bg-pink-500', text: 'text-pink-500', name: 'Ashley' },
-      2: { bg: 'bg-purple-500', text: 'text-purple-500', name: 'Brylee' },
-      3: { bg: 'bg-amber-500', text: 'text-amber-500', name: 'Breea' }
-    }
+  const addActivity = () => {
+    if (!newAct.trim()) return;
+    const p = getPick(selDay, selMember);
+    const acts = [...(p.activities || []), newAct.trim()];
+    savePick(selDay, selMember, acts, p.restaurant || "");
+    setNewAct("");
+    inputRef.current?.focus();
+  };
 
-    const packingCategories = ['Clothes', 'Toiletries', 'Beach', 'Documents', 'Electronics', 'Misc']
-    const budgetCategories = ['Food', 'Activities', 'Transport', 'Shopping', 'Accommodation', 'Other']
+  const removeActivity = (i) => {
+    const p = getPick(selDay, selMember);
+    const acts = (p.activities || []).filter((_, idx) => idx !== i);
+    savePick(selDay, selMember, acts, p.restaurant || "");
+  };
 
-    const tripDates = [
-      { day: 'Sat, Jun 6', id: 'day-1' },
-      { day: 'Sun, Jun 7', id: 'day-2' },
-      { day: 'Mon, Jun 8', id: 'day-3' },
-      { day: 'Tue, Jun 9', id: 'day-4' },
-      { day: 'Wed, Jun 10', id: 'day-5' },
-      { day: 'Thu, Jun 11', id: 'day-6' },
-      { day: 'Fri, Jun 12', id: 'day-7' }
-    ]
+  const setRestaurant = () => {
+    if (!newRest.trim()) return;
+    const p = getPick(selDay, selMember);
+    savePick(selDay, selMember, p.activities || [], newRest.trim());
+    setNewRest("");
+  };
 
-    function App() {
-      const [activeTab, setActiveTab] = useState('overview')
-      const [members, setMembers] = useState([])
-      const [flights, setFlights] = useState([])
-      const [seatAssignments, setSeatAssignments] = useState([])
-      const [picks, setPicks] = useState([])
-      const [packingItems, setPackingItems] = useState([])
-      const [budgetItems, setBudgetItems] = useState([])
-      const [selectedMember, setSelectedMember] = useState(0)
-      const [daysRemaining, setDaysRemaining] = useState(0)
-      const [copied, setCopied] = useState(false)
-      const [packingFilter, setPackingFilter] = useState('all')
-      const [newActivity, setNewActivity] = useState('')
-      const [newRestaurant, setNewRestaurant] = useState('')
-      const [selectedDay, setSelectedDay] = useState('day-1')
+  const clearRestaurant = () => {
+    const p = getPick(selDay, selMember);
+    savePick(selDay, selMember, p.activities || [], "");
+  };
 
-      // Calculate days remaining
-      useEffect(() => {
-        const departure = new Date('2026-06-06')
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const days = Math.ceil((departure - today) / (1000 * 60 * 60 * 24))
-        setDaysRemaining(Math.max(0, days))
-      }, [])
+  const copyCode = () => {
+    navigator.clipboard.writeText("AIO6OA");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-      // Fetch all data
-      useEffect(() => {
-        const fetchData = async () => {
-          try {
-            // Fetch members
-            const membersRes = await fetch(
-              `${SUPABASE_URL}/rest/v1/trip_members?trip_slug=eq.${TRIP_SLUG}&select=*`,
-              { headers }
-            )
-            if (membersRes.ok) {
-              setMembers(await membersRes.json())
-            }
+  /* Countdown */
+  const daysUntil = Math.max(0, Math.ceil((new Date("2026-06-06") - new Date()) / 86400000));
 
-            // Fetch flights
-            const flightsRes = await fetch(
-              `${SUPABASE_URL}/rest/v1/flights?trip_slug=eq.${TRIP_SLUG}&select=*&order=leg_order.asc`,
-              { headers }
-            )
-            if (flightsRes.ok) {
-              setFlights(await flightsRes.json())
-            }
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-b from-teal-600 to-cyan-700 flex items-center justify-center">
+      <div className="text-center text-white">
+        <div className="text-6xl wave mb-4">🌊</div>
+        <p className="text-xl font-semibold">Loading your trip...</p>
+      </div>
+    </div>
+  );
 
-            // Fetch seat assignments
-            const seatsRes = await fetch(
-              `${SUPABASE_URL}/rest/v1/seat_assignments?select=*`,
-              { headers }
-            )
-            if (seatsRes.ok) {
-              setSeatAssignments(await seatsRes.json())
-            }
+  const dayData = DAYS.find(d => d.id === selDay);
+  const curPick = getPick(selDay, selMember);
+  const curMember = MEMBERS[selMember];
 
-            // Fetch picks
-            const picksRes = await fetch(
-              `${SUPABASE_URL}/rest/v1/picks?trip_slug=eq.${TRIP_SLUG}&select=*`,
-              { headers }
-            )
-            if (picksRes.ok) {
-              setPicks(await picksRes.json())
-            }
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-4 shadow-lg">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <span>🏝️</span> STT 2026
+            </h1>
+            <p className="text-teal-100 text-sm">St. Thomas · June 6-12</p>
+          </div>
+          <div className="bg-white/20 rounded-full px-3 py-1 text-sm font-medium">
+            {daysUntil} days!
+          </div>
+        </div>
+      </div>
 
-            // Fetch packing items
-            const packingRes = await fetch(
-              `${SUPABASE_URL}/rest/v1/packing_items?trip_slug=eq.${TRIP_SLUG}&select=*`,
-              { headers }
-            )
-            if (packingRes.ok) {
-              setPackingItems(await packingRes.json())
-            }
+      {/* Tab bar */}
+      <div className="bg-white border-b sticky top-0 z-30">
+        <div className="max-w-lg mx-auto flex">
+          {[
+            { key:"overview", icon: <Sun size={16}/>, label:"Overview" },
+            { key:"picks",   icon: <MapPin size={16}/>, label:"Daily Picks" },
+            { key:"flights", icon: <Plane size={16}/>,  label:"Flights" },
+          ].map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 border-b-2 transition-colors ${
+                tab === t.key ? "border-teal-500 text-teal-700" : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}>
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            // Fetch budget
-            const budgetRes = await fetch(
-              `${SUPABASE_URL}/rest/v1/budget?trip_slug=eq.${TRIP_SLUG}&select=*&order=expense_date.desc`,
-              { headers }
-            )
-            if (budgetRes.ok) {
-              setBudgetItems(await budgetRes.json())
-            }
-          } catch (e) {
-            console.error('Error fetching data:', e)
-          }
-        }
-
-        fetchData()
-      }, [])
-
-      const copyConfirmation = (code) => {
-        navigator.clipboard.writeText(code)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      }
-
-      const togglePackedItem = async (id, packed) => {
-        try {
-          await fetch(
-            `${SUPABASE_URL}/rest/v1/packing_items?id=eq.${id}`,
-            {
-              method: 'PATCH',
-              headers,
-              body: JSON.stringify({ packed: !packed })
-            }
-          )
-          setPackingItems(items =>
-            items.map(item => item.id === id ? { ...item, packed: !packed } : item)
-          )
-        } catch (e) {
-          console.error('Error updating packing item:', e)
-        }
-      }
-
-      const addPackingItem = async (item, category, member) => {
-        try {
-          const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/packing_items`,
-            {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                trip_slug: TRIP_SLUG,
-                item,
-                category,
-                member_name: member,
-                packed: false
-              })
-            }
-          )
-          if (res.ok) {
-            const newItem = await res.json()
-            setPackingItems([...packingItems, newItem[0]])
-          }
-        } catch (e) {
-          console.error('Error adding packing item:', e)
-        }
-      }
-
-      const deletePackingItem = async (id) => {
-        try {
-          await fetch(
-            `${SUPABASE_URL}/rest/v1/packing_items?id=eq.${id}`,
-            { method: 'DELETE', headers }
-          )
-          setPackingItems(items => items.filter(item => item.id !== id))
-        } catch (e) {
-          console.error('Error deleting packing item:', e)
-        }
-      }
-
-      const addBudgetItem = async (description, amount, category, member) => {
-        try {
-          const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/budget`,
-            {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                trip_slug: TRIP_SLUG,
-                description,
-                amount: parseFloat(amount),
-                category,
-                member_name: member,
-                expense_date: new Date().toISOString()
-              })
-            }
-          )
-          if (res.ok) {
-            const newItem = await res.json()
-            setBudgetItems([newItem[0], ...budgetItems])
-          }
-        } catch (e) {
-          console.error('Error adding budget item:', e)
-        }
-      }
-
-      const deleteBudgetItem = async (id) => {
-        try {
-          await fetch(
-            `${SUPABASE_URL}/rest/v1/budget?id=eq.${id}`,
-            { method: 'DELETE', headers }
-          )
-          setBudgetItems(items => items.filter(item => item.id !== id))
-        } catch (e) {
-          console.error('Error deleting budget item:', e)
-        }
-      }
-
-      const addActivityPick = async (day) => {
-        if (!newActivity.trim()) return
-        try {
-          const existing = picks.find(p => p.day_id === day && p.color_index === selectedMember)
-          const activities = existing?.activities || []
-
-          const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/picks`,
-            {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                trip_slug: TRIP_SLUG,
-                day_id: day,
-                color_index: selectedMember,
-                activities: [...activities, newActivity],
-                restaurant: existing?.restaurant || null
-              })
-            }
-          )
-          if (res.ok) {
-            const newPick = await res.json()
-            setPicks([...picks.filter(p => p.id !== existing?.id), newPick[0]])
-            setNewActivity('')
-          }
-        } catch (e) {
-          console.error('Error adding activity:', e)
-        }
-      }
-
-      const addRestaurantPick = async (day) => {
-        if (!newRestaurant.trim()) return
-        try {
-          const existing = picks.find(p => p.day_id === day && p.color_index === selectedMember)
-          const activities = existing?.activities || []
-
-          const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/picks`,
-            {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({
-                trip_slug: TRIP_SLUG,
-                day_id: day,
-                color_index: selectedMember,
-                activities,
-                restaurant: newRestaurant
-              })
-            }
-          )
-          if (res.ok) {
-            const newPick = await res.json()
-            setPicks([...picks.filter(p => p.id !== existing?.id), newPick[0]])
-            setNewRestaurant('')
-          }
-        } catch (e) {
-          console.error('Error adding restaurant:', e)
-        }
-      }
-
-      const getPackingStats = () => {
-        const total = packingItems.length
-        const packed = packingItems.filter(p => p.packed).length
-        return { total, packed, percent: total > 0 ? Math.round((packed / total) * 100) : 0 }
-      }
-
-      const getTotalBudget = () => {
-        return budgetItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
-      }
-
-      const getPerPersonSpending = (member) => {
-        return budgetItems
-          .filter(item => item.member_name === member)
-          .reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
-      }
-
-      const renderTab = () => {
-        if (activeTab === 'overview') {
-          return (
-            <div className="pb-20 bg-gradient-to-b from-cyan-50 to-blue-50 min-h-screen">
-              <div className="p-4 space-y-4">
-                {/* Countdown Card */}
-                <div className="bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl p-6 text-white shadow-lg">
-                  <div className="text-center">
-                    <div className="text-5xl font-bold">{daysRemaining}</div>
-                    <div className="text-sm opacity-90">days until paradise</div>
-                    <div className="mt-2 text-xs opacity-75">June 6, 2026</div>
-                  </div>
-                </div>
-
-                {/* Trip Summary */}
-                <div className="bg-white rounded-xl p-4 shadow-md">
-                  <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <Palmtree className="w-5 h-5 text-teal-600" />
-                    St. Thomas, USVI
-                  </h2>
-                  <div className="space-y-2 text-sm">
-                    <div className="text-gray-600">
-                      <Calendar className="w-4 h-4 inline mr-2 text-teal-600" />
-                      June 6 - 12, 2026 (7 days)
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {[0, 1, 2, 3].map(idx => (
-                        <div key={idx} className="flex items-center gap-1">
-                          <div className={`w-3 h-3 rounded-full ${memberColors[idx].bg}`}></div>
-                          <span className="text-xs text-gray-700">{memberColors[idx].name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white rounded-lg p-3 shadow-md text-center">
-                    <div className="text-2xl font-bold text-teal-600">${getTotalBudget().toFixed(0)}</div>
-                    <div className="text-xs text-gray-600 mt-1">Total Budget</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 shadow-md text-center">
-                    <div className="text-2xl font-bold text-blue-600">{getPackingStats().percent}%</div>
-                    <div className="text-xs text-gray-600 mt-1">Packed</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 shadow-md text-center">
-                    <div className="text-2xl font-bold text-purple-600">7</div>
-                    <div className="text-xs text-gray-600 mt-1">Days Planned</div>
-                  </div>
-                </div>
-
-                {/* Packing Progress Bar */}
-                <div className="bg-white rounded-lg p-4 shadow-md">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-gray-700">Packing Progress</span>
-                    <span className="text-xs text-gray-600">{getPackingStats().packed}/{getPackingStats().total}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-gradient-to-r from-teal-400 to-cyan-500 h-3 rounded-full transition-all"
-                      style={{ width: `${getPackingStats().percent}%` }}
-                    ></div>
-                  </div>
-                </div>
+      <div className="max-w-lg mx-auto p-4 pb-20">
+        {/* ─── OVERVIEW ─── */}
+        {tab === "overview" && (
+          <div className="space-y-4">
+            {/* Countdown */}
+            <div className="bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl p-6 text-white text-center shadow-lg">
+              <p className="text-5xl font-bold">{daysUntil}</p>
+              <p className="text-teal-100 mt-1">days until St. Thomas!</p>
+              <div className="flex justify-center gap-4 mt-4 text-sm">
+                <span className="flex items-center gap-1"><Calendar size={14}/> June 6-12, 2026</span>
+                <span className="flex items-center gap-1"><Users size={14}/> 4 travelers</span>
               </div>
             </div>
-          )
-        }
 
-        if (activeTab === 'flights') {
-          return (
-            <div className="pb-20 bg-gradient-to-b from-blue-50 to-cyan-50 min-h-screen p-4">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Plane className="w-6 h-6 text-blue-600" />
-                Flights
-              </h1>
-
-              {/* Outbound */}
-              <div className="bg-white rounded-xl p-4 shadow-md mb-4">
-                <div className="text-xs font-semibold text-teal-600 uppercase mb-2">Outbound</div>
-                <div className="flex justify-between items-center mb-3">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-800">STL</div>
-                    <div className="text-xs text-gray-600">6:30 AM</div>
-                  </div>
-                  <div className="flex-1 text-center px-2">
-                    <div className="text-xs text-gray-600 mb-1">WN3107</div>
-                    <div className="border-t-2 border-teal-300 pt-1">
-                      <span className="text-xs text-gray-600">2h 45m</span>
+            {/* Members */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border">
+              <h3 className="font-semibold text-gray-800 mb-3">The Crew</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {MEMBERS.map(m => (
+                  <div key={m.idx} className="text-center">
+                    <div className={`w-12 h-12 ${m.bg} rounded-full mx-auto flex items-center justify-center text-white font-bold text-lg`}>
+                      {m.name[0]}
                     </div>
+                    <p className="text-xs mt-1 font-medium text-gray-700">{m.name}</p>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-800">MCO</div>
-                    <div className="text-xs text-gray-600">10:00 AM</div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-800">MCO</div>
-                    <div className="text-xs text-gray-600">11:15 AM</div>
-                  </div>
-                  <div className="flex-1 text-center px-2">
-                    <div className="text-xs text-gray-600 mb-1">WN4999</div>
-                    <div className="border-t-2 border-teal-300 pt-1">
-                      <span className="text-xs text-gray-600">3h 45m</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-800">STT</div>
-                    <div className="text-xs text-gray-600">2:00 PM</div>
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t">
-                  <div
-                    className="flex items-center gap-2 text-sm font-mono text-teal-600 cursor-pointer hover:text-teal-700"
-                    onClick={() => copyConfirmation('AIO6OA')}
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied!' : 'AIO6OA'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Return */}
-              <div className="bg-white rounded-xl p-4 shadow-md mb-4">
-                <div className="text-xs font-semibold text-purple-600 uppercase mb-2">Return</div>
-                <div className="flex justify-between items-center">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-800">STT</div>
-                    <div className="text-xs text-gray-600">2:45 PM</div>
-                  </div>
-                  <div className="flex-1 text-center px-2">
-                    <div className="text-xs text-gray-600 mb-1">WN6412</div>
-                    <div className="border-t-2 border-purple-300 pt-1">
-                      <span className="text-xs text-gray-600">5h 25m</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-800">STL</div>
-                    <div className="text-xs text-gray-600">11:10 PM</div>
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t">
-                  <div
-                    className="flex items-center gap-2 text-sm font-mono text-purple-600 cursor-pointer hover:text-purple-700"
-                    onClick={() => copyConfirmation('AIO6OA')}
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied!' : 'AIO6OA'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
-                <span className="font-semibold">Seats:</span> Check with your airline for seat assignments and updates.
+                ))}
               </div>
             </div>
-          )
-        }
 
-        if (activeTab === 'picks') {
-          const memberTabs = [0, 1, 2, 3]
-          const dayPicks = picks.filter(p => p.day_id === selectedDay && p.color_index === selectedMember)
-          const currentDayPicks = dayPicks.length > 0 ? dayPicks[0] : null
+            {/* Week at a Glance */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border">
+              <h3 className="font-semibold text-gray-800 mb-3">Week at a Glance</h3>
+              <div className="space-y-2">
+                {DAYS.map(d => {
+                  const totalActs = MEMBERS.reduce((sum, m) => sum + (getPick(d.id, m.idx).activities || []).length, 0);
+                  const totalRest = MEMBERS.filter(m => getPick(d.id, m.idx).restaurant).length;
+                  return (
+                    <button key={d.id} onClick={() => { setSelDay(d.id); setTab("picks"); }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-teal-50 transition-colors text-left">
+                      <div>
+                        <p className="font-medium text-gray-800 text-sm">{d.date} — {d.label}</p>
+                        <p className="text-xs text-gray-500">{totalActs} activities · {totalRest} restaurants</p>
+                      </div>
+                      <ChevronRight size={16} className="text-gray-400"/>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
-          return (
-            <div className="pb-20 bg-gradient-to-b from-purple-50 to-pink-50 min-h-screen p-4">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Sun className="w-6 h-6 text-yellow-500" />
-                Daily Picks
-              </h1>
-
-              {/* Member Selector */}
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                {memberTabs.map(idx => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedMember(idx)}
-                    className={`px-4 py-2 rounded-full whitespace-nowrap transition-all text-sm font-semibold ${
-                      selectedMember === idx
-                        ? `${memberColors[idx].bg} text-white shadow-md`
-                        : `bg-white text-gray-700 border border-gray-200`
-                    }`}
-                  >
-                    {memberColors[idx].name}
+        {/* ─── DAILY PICKS ─── */}
+        {tab === "picks" && (
+          <div className="space-y-4">
+            {/* Day selector */}
+            <div className="sticky top-[53px] z-20 bg-gray-50 pt-1 pb-2 -mx-4 px-4">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                {DAYS.map(d => (
+                  <button key={d.id} onClick={() => setSelDay(d.id)}
+                    className={`flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selDay === d.id ? "bg-teal-600 text-white shadow-md" : "bg-white text-gray-600 border hover:bg-gray-100"
+                    }`}>
+                    <div className="text-xs opacity-75">{d.date}</div>
+                    <div>{d.label}</div>
                   </button>
                 ))}
               </div>
+            </div>
 
-              {/* Day Selector */}
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                {tripDates.map(date => (
-                  <button
-                    key={date.id}
-                    onClick={() => setSelectedDay(date.id)}
-                    className={`px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
-                      selectedDay === date.id
-                        ? 'bg-teal-500 text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-200'
-                    }`}
-                  >
-                    {date.day.split(',')[0]}
-                  </button>
-                ))}
-              </div>
+            {/* Member selector */}
+            <div className="flex gap-2">
+              {MEMBERS.map(m => (
+                <button key={m.idx} onClick={() => setSelMember(m.idx)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    selMember === m.idx
+                      ? `${m.bg} text-white shadow-md ring-2 ${m.ring} ring-offset-2`
+                      : `bg-white ${m.text} border ${m.border} hover:${m.light}`
+                  }`}>
+                  {m.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Current member's picks */}
+            <div className={`${curMember.light} rounded-xl p-4 border ${curMember.border}`}>
+              <h3 className={`font-bold ${curMember.text} mb-3`}>{curMember.name}'s Picks — {dayData.label}</h3>
 
               {/* Activities */}
-              <div className="bg-white rounded-xl p-4 shadow-md mb-4">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-yellow-500" />
-                  Activities
-                </h3>
-                <div className="space-y-2 mb-3">
-                  {currentDayPicks?.activities?.map((activity, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-gray-50 p-2 rounded text-sm text-gray-700">
-                      <div className={`w-2 h-2 rounded-full ${memberColors[selectedMember].bg}`}></div>
-                      {activity}
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <MapPin size={12}/> Activities
+                </p>
+                {(curPick.activities || []).length === 0 && (
+                  <p className="text-sm text-gray-400 italic mb-2">No activities yet — add some!</p>
+                )}
+                <div className="space-y-1.5 mb-2">
+                  {(curPick.activities || []).map((a, i) => (
+                    <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 shadow-sm">
+                      <span className="text-sm text-gray-800">{a}</span>
+                      <button onClick={() => removeActivity(i)} className="text-gray-400 hover:text-red-500 transition-colors">
+                        <X size={16}/>
+                      </button>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add activity..."
-                    value={newActivity}
-                    onChange={(e) => setNewActivity(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addActivityPick(selectedDay)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-                  />
-                  <button
-                    onClick={() => addActivityPick(selectedDay)}
-                    className="bg-teal-500 text-white px-3 py-2 rounded-lg hover:bg-teal-600 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
+                  <input ref={inputRef} value={newAct} onChange={e => setNewAct(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && addActivity()}
+                    placeholder="Add an activity..." className="flex-1 text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+                  <button onClick={addActivity} className="bg-teal-500 text-white rounded-lg px-3 py-2 hover:bg-teal-600 transition-colors">
+                    <Plus size={16}/>
                   </button>
                 </div>
               </div>
 
               {/* Restaurant */}
-              <div className="bg-white rounded-xl p-4 shadow-md">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                  <UtensilsCrossed className="w-5 h-5 text-orange-500" />
-                  Restaurant
-                </h3>
-                {currentDayPicks?.restaurant && (
-                  <div className="bg-orange-50 p-3 rounded-lg mb-3 text-sm font-medium text-gray-800">
-                    {currentDayPicks.restaurant}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <Utensils size={12}/> Restaurant Pick
+                </p>
+                {curPick.restaurant ? (
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 shadow-sm">
+                    <span className="text-sm text-gray-800">{curPick.restaurant}</span>
+                    <button onClick={clearRestaurant} className="text-gray-400 hover:text-red-500 transition-colors">
+                      <X size={16}/>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input value={newRest} onChange={e => setNewRest(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && setRestaurant()}
+                      placeholder="Pick a restaurant..." className="flex-1 text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"/>
+                    <button onClick={setRestaurant} className="bg-teal-500 text-white rounded-lg px-3 py-2 hover:bg-teal-600 transition-colors">
+                      <Plus size={16}/>
+                    </button>
                   </div>
                 )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add restaurant..."
-                    value={newRestaurant}
-                    onChange={(e) => setNewRestaurant(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addRestaurantPick(selectedDay)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  />
-                  <button
-                    onClick={() => addRestaurantPick(selectedDay)}
-                    className="bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
             </div>
-          )
-        }
 
-        if (activeTab === 'packing') {
-          const filtered = packingFilter === 'all'
-            ? packingItems
-            : packingItems.filter(item => item.category === packingFilter)
-
-          return (
-            <div className="pb-20 bg-gradient-to-b from-green-50 to-emerald-50 min-h-screen p-4">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <ShoppingBag className="w-6 h-6 text-green-600" />
-                Packing List
-              </h1>
-
-              {/* Category Filter */}
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                <button
-                  onClick={() => setPackingFilter('all')}
-                  className={`px-3 py-2 rounded-full whitespace-nowrap text-xs font-semibold transition-all ${
-                    packingFilter === 'all'
-                      ? 'bg-green-600 text-white shadow-md'
-                      : 'bg-white text-gray-700 border border-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                {packingCategories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setPackingFilter(cat)}
-                    className={`px-3 py-2 rounded-full whitespace-nowrap text-xs font-semibold transition-all ${
-                      packingFilter === cat
-                        ? 'bg-green-600 text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-200'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-
-              {/* Progress */}
-              <div className="bg-white rounded-lg p-3 mb-4 shadow-md">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-gray-700">Progress</span>
-                  <span className="text-lg font-bold text-green-600">{getPackingStats().percent}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-gradient-to-r from-green-400 to-emerald-500 h-3 rounded-full transition-all"
-                    style={{ width: `${getPackingStats().percent}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Add Item Form */}
-              <PackingForm onAdd={addPackingItem} categories={packingCategories} />
-
-              {/* Items List */}
-              <div className="space-y-2">
-                {filtered.map(item => (
-                  <div
-                    key={item.id}
-                    className={`bg-white rounded-lg p-3 shadow-sm flex items-center gap-3 transition-all ${
-                      item.packed ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <button
-                      onClick={() => togglePackedItem(item.id, item.packed)}
-                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        item.packed
-                          ? 'bg-green-500 border-green-500'
-                          : 'border-gray-300 hover:border-green-500'
-                      }`}
-                    >
-                      {item.packed && <Check className="w-3 h-3 text-white" />}
-                    </button>
-                    <div className="flex-1">
-                      <div className={`text-sm font-medium ${item.packed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                        {item.item}
-                      </div>
-                      <div className="text-xs text-gray-600">{item.category}</div>
-                    </div>
-                    <button
-                      onClick={() => deletePackingItem(item.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {filtered.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <ShoppingBag className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No items in this category</p>
-                </div>
-              )}
-            </div>
-          )
-        }
-
-        if (activeTab === 'budget') {
-          const groupedByDay = {}
-          budgetItems.forEach(item => {
-            const date = new Date(item.expense_date).toLocaleDateString()
-            if (!groupedByDay[date]) groupedByDay[date] = []
-            groupedByDay[date].push(item)
-          })
-
-          return (
-            <div className="pb-20 bg-gradient-to-b from-yellow-50 to-orange-50 min-h-screen p-4">
-              <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <DollarSign className="w-6 h-6 text-green-600" />
-                Budget
-              </h1>
-
-              {/* Summary Cards */}
-              <div className="bg-white rounded-xl p-4 shadow-md mb-4">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600">${getTotalBudget().toFixed(2)}</div>
-                  <div className="text-sm text-gray-600 mt-1">Total Spent</div>
-                </div>
-              </div>
-
-              {/* Per-Person Breakdown */}
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[0, 1, 2, 3].map(idx => (
-                  <div key={idx} className="bg-white rounded-lg p-3 shadow-sm">
-                    <div className={`text-xs font-semibold ${memberColors[idx].text}`}>
-                      {memberColors[idx].name}
-                    </div>
-                    <div className="text-lg font-bold text-gray-800 mt-1">
-                      ${getPerPersonSpending(memberColors[idx].name).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Add Expense Form */}
-              <BudgetForm onAdd={addBudgetItem} categories={budgetCategories} />
-
-              {/* Expenses List */}
-              <div className="space-y-4 mt-4">
-                {Object.entries(groupedByDay).map(([date, items]) => (
-                  <div key={date}>
-                    <div className="text-xs font-semibold text-gray-600 uppercase mb-2">{date}</div>
-                    <div className="space-y-2">
-                      {items.map(item => (
-                        <div key={item.id} className="bg-white rounded-lg p-3 shadow-sm flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-800">{item.description}</div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              <span>{item.member_name}</span> • <span>{item.category}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <div className="font-bold text-gray-800">${parseFloat(item.amount).toFixed(2)}</div>
-                            </div>
-                            <button
-                              onClick={() => deleteBudgetItem(item.id)}
-                              className="text-gray-400 hover:text-red-500 transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {budgetItems.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <DollarSign className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No expenses yet</p>
-                </div>
-              )}
-            </div>
-          )
-        }
-      }
-
-      return (
-        <div className="bg-gradient-to-b from-cyan-50 to-blue-50 min-h-screen">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white p-4 sticky top-0 z-10 shadow-lg">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Palmtree className="w-5 h-5" />
-                <h1 className="text-2xl font-bold">STT 2026</h1>
-                <Sun className="w-5 h-5" />
-              </div>
-              <p className="text-xs opacity-90">St. Thomas Vacation</p>
-            </div>
-          </div>
-
-          {/* Content */}
-          {renderTab()}
-
-          {/* Bottom Navigation */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-            <div className="flex justify-around">
-              {[
-                { id: 'overview', icon: Sun, label: 'Overview' },
-                { id: 'flights', icon: Plane, label: 'Flights' },
-                { id: 'picks', icon: Zap, label: 'Daily' },
-                { id: 'packing', icon: ShoppingBag, label: 'Packing' },
-                { id: 'budget', icon: DollarSign, label: 'Budget' }
-              ].map(tab => {
-                const Icon = tab.icon
+            {/* Everyone's Picks summary */}
+            <div className="bg-white rounded-xl p-4 border shadow-sm">
+              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <Users size={16}/> Everyone's Picks — {dayData.label}
+              </h3>
+              {MEMBERS.map(m => {
+                const p = getPick(selDay, m.idx);
+                const hasStuff = (p.activities || []).length > 0 || p.restaurant;
                 return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
-                      activeTab === tab.id
-                        ? 'text-teal-600 bg-teal-50'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-xs font-semibold">{tab.label}</span>
-                  </button>
-                )
+                  <div key={m.idx} className={`mb-3 last:mb-0 p-3 rounded-lg ${m.light} border ${m.border}`}>
+                    <p className={`font-semibold text-sm ${m.text} mb-1`}>{m.name}</p>
+                    {!hasStuff && <p className="text-xs text-gray-400 italic">No picks yet</p>}
+                    {(p.activities || []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-1">
+                        {p.activities.map((a, i) => (
+                          <span key={i} className="text-xs bg-white/70 rounded-full px-2 py-0.5 text-gray-700">{a}</span>
+                        ))}
+                      </div>
+                    )}
+                    {p.restaurant && (
+                      <p className="text-xs text-gray-600 flex items-center gap-1"><Utensils size={10}/> {p.restaurant}</p>
+                    )}
+                  </div>
+                );
               })}
             </div>
           </div>
-        </div>
-      )
-    }
+        )}
 
-    function PackingForm({ onAdd, categories }) {
-      const [item, setItem] = useState('')
-      const [category, setCategory] = useState('Clothes')
+        {/* ─── FLIGHTS ─── */}
+        {tab === "flights" && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-800">Confirmation Code</h3>
+                <button onClick={copyCode}
+                  className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-800 font-medium">
+                  {copied ? <><Check size={14}/> Copied!</> : <><Copy size={14}/> Copy</>}
+                </button>
+              </div>
+              <div className="bg-teal-50 rounded-lg p-3 text-center">
+                <p className="text-3xl font-mono font-bold tracking-widest text-teal-700">AIO6OA</p>
+              </div>
+            </div>
 
-      const handleSubmit = (e) => {
-        e.preventDefault()
-        if (item.trim()) {
-          onAdd(item, category, '')
-          setItem('')
-        }
-      }
+            {/* Outbound */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border">
+              <p className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-2">Outbound · June 6</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                    <Plane size={18} className="text-teal-600"/>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 text-sm">STL → MCO</p>
+                    <p className="text-xs text-gray-500">Depart 6:00 AM · Arrive 9:30 AM</p>
+                  </div>
+                </div>
+                <div className="border-l-2 border-dashed border-gray-200 ml-5 pl-6 py-1">
+                  <p className="text-xs text-gray-400">Layover in Orlando · ~2h</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+                    <Plane size={18} className="text-cyan-600"/>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 text-sm">MCO → STT</p>
+                    <p className="text-xs text-gray-500">Depart 11:30 AM · Arrive 3:45 PM</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl p-4 shadow-md mb-4 space-y-3">
-          <input
-            type="text"
-            placeholder="What to pack..."
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-          />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Item
-          </button>
-        </form>
-      )
-    }
-
-    function BudgetForm({ onAdd, categories }) {
-      const [description, setDescription] = useState('')
-      const [amount, setAmount] = useState('')
-      const [category, setCategory] = useState('Food')
-      const [member, setMember] = useState('Jay')
-
-      const handleSubmit = (e) => {
-        e.preventDefault()
-        if (description.trim() && amount) {
-          onAdd(description, amount, category, member)
-          setDescription('')
-          setAmount('')
-        }
-      }
-
-      return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl p-4 shadow-md mb-4 space-y-3">
-          <input
-            type="text"
-            placeholder="Description..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
-              placeholder="Amount"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            {/* Return */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border">
+              <p className="text-xs font-semibold text-pink-600 uppercase tracking-wide mb-2">Return · June 12</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                  <Plane size={18} className="text-pink-600 transform rotate-180"/>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800 text-sm">STT → STL</p>
+                  <p className="text-xs text-gray-500">Details TBD</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <select
-            value={member}
-            onChange={(e) => setMember(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          >
-            <option>Jay</option>
-            <option>Ashley</option>
-            <option>Brylee</option>
-            <option>Breea</option>
-          </select>
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Expense
-          </button>
-        </form>
-      )
-    }
+        )}
+      </div>
+    </div>
+  );
+}
 
-    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App))
-  </script>
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
 </body>
 </html>
