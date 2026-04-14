@@ -13,7 +13,7 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
+  <script>window.react = window.React;</script>  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; }
     html, body, #root { width: 100%; height: 100%; }
@@ -24,7 +24,7 @@
 
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React
-    const { Plane, UtensilsCrossed, ShoppingBag, CheckSquare, DollarSign, Sun, Palmtree, Plus, X, Copy, Check, Calendar, Users, Zap } = lucideReact || window.lucideReact
+    const { Plane, UtensilsCrossed, ShoppingBag, CheckSquare, DollarSign, Sun, Palmtree, Plus, X, Copy, Check, Calendar, Users, Zap } = LucideReact || window.LucideReact
 
     const SUPABASE_URL = 'https://zcqtkqslrgwmpcizgaca.supabase.co'
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjcXRrcXNscmd3bXBjaXpnYWNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODcwODQsImV4cCI6MjA5MTE2MzA4NH0.gc-9yPPrzwgz5g2wiPnyRdfWKelik6eKyMn3SkSnaUs'
